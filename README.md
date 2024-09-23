@@ -8,6 +8,7 @@ This paper explores the implications of incidental exposure to political content
 	- 25 Gaming Top-Influencers
 	- 25 Health Top-Influencers
 - [Initial codebook](https://docs.google.com/document/d/15IMW8StK9vWWIWhTKKYUYsZL0lsHWeUZ/edit?usp=sharing&ouid=115103257437673017475&rtpof=true&sd=true)
+- [Initial coded videos](https://docs.google.com/spreadsheets/d/1Ku75scOXDvINhDh1s3DvCUoxyI2nLyzFZPnge-t7wdk/edit?usp=sharing)
 
 ## Research plan
 1. Establishing presences of ideological cues in entertainment content using computer vision techniques
