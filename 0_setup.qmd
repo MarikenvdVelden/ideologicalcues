@@ -1,0 +1,23 @@
+---
+title: "0_setup"
+format: html
+---
+
+Just the setup script to make sure the virtual environment with the neccesary Python packages exists
+
+```{r}
+if (!reticulate::virtualenv_exists("r-scenedetect")) {
+  reticulate::virtualenv_install("r-scenedetect", packages = c(
+    "scenedetect",
+    "opencv-python",
+    "openai-whisper",
+    "openai-clip",
+    "Pillow",
+    "torchvision",
+    "pandas"
+  ))
+}
+reticulate::use_virtualenv("r-scenedetect")
+library(reticulate)
+```
+
