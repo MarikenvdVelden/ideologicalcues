@@ -1,0 +1,120 @@
+---
+title: Annotate videos using Clip
+date: today
+format:
+  html:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+---
+
+# Introduction
+
+We use OpenAI's CLIP model to determine if one of several descriptive labels fit the image
+
+```{r setup}
+# note start time
+start <- Sys.time()
+reticulate::use_virtualenv("r-scenedetect")
+library(reticulate)
+library(tidyverse)
+```
+
+```{python}
+import torch
+import clip
+from PIL import Image
+import pandas as pd
+
+def clipme(img_path: str, labels: list, verbose=True):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, preprocess = clip.load("ViT-B/32", device=device)
+  
+    # Preprocess the image and tokenize the labels
+    image = preprocess(Image.open(img_path)).unsqueeze(0).to(device)
+    labels_tensor = clip.tokenize(labels).to(device)
+    
+    with torch.no_grad():
+        # Encode the image and text labels
+        image_features = model.encode_image(image)
+        text_features = model.encode_text(labels_tensor)
+        
+        # Get the logits and probabilities
+        logits_per_image, logits_per_text = model(image, labels_tensor)
+        probs = logits_per_image.softmax(dim=-1).cpu().numpy()[0]
+    
+    # Create a DataFrame with labels and their corresponding probabilities
+    df = pd.DataFrame({
+        'label': labels,
+        'prob': np.ndarray.tolist(probs)
+    })
+    if verbose:
+      print(df)
+    
+    return df
+```
+
+```{r}
+clipme <- function(str, labels = labels, verbose = TRUE) {
+  df <- py$clipme(str, labels = labels, verbose = verbose)
+  df$label <- df$label$tolist()
+  df$prob <- df$prob$tolist()
+  attr(df, "pandas.index") <- NULL
+  as_tibble(df)
+}
+```
+
+
+```{r}
+imgs <- tibble(
+  file = list.files("vids-split/images/", full.names = TRUE)
+)
+labels <- c(
+  "LGBTQ", 
+  "feminist",
+  "gun",
+  "rainbow", 
+  "flag",
+  "religion",
+  "patriotism",
+  "pro-environment", 
+  "activist", 
+  "ethnicity", 
+  "mask",
+  
+  # non-political
+  "videogame",
+)
+df <- clipme(imgs$file[61], labels = labels)
+df
+```
+
+
+```{r}
+imgs_coded <- imgs |> 
+  # head() |> 
+  mutate(coding = map(file, function(x) clipme(x, labels = labels, verbose = FALSE),
+                      .progress = interactive())) |> 
+  mutate(labs = map_chr(coding, function(df) {
+    df |> 
+      filter(prob > 0.40) |> 
+      pull(label) |> 
+      toString()
+  }))
+```
+
+
+# wrap up
+
+Information for reproducing this report.
+
+```{r wrapup}
+sessionInfo()
+# py package versions
+py_list_packages()
+Sys.time()
+# note how long the script takes to (re-)run
+Sys.time() - start
+```
+
